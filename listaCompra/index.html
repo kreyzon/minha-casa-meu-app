@@ -1,0 +1,109 @@
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.2.1/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.2.1/material.min.js"></script>
+</head>
+<body onload="verificarLogin();">
+  <form action="#">
+    <div id="divLogin">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input id="login" class="mdl-textfield__input" type="text" >
+        <label class="mdl-textfield__label" for="login">Login</label>
+      </div>
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input id="senha" type="password" class="mdl-textfield__input">
+        <label class="mdl-textfield__label" for="senha">Senha</label>
+      </div>
+      <input type="button" onclick="carregarUsuario()" value="Carregar" class="mdl-button mdl-js-button mdl-button--raised" />
+    </div>
+    <div id="divLogado" style="display:none">
+      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input id="loginUser" disabled class="mdl-textfield__input" type="text" >
+      </div>
+      <input type="button" onclick="logout()" value="Sair" class="mdl-button mdl-js-button mdl-button--raised" />
+    </div>
+    <div id="container">
+      <div id="progresso" style="display:none">
+            <div class="mdl-spinner mdl-js-spinner mdl-spinner--single-color is-active" style="left:50%; position:absolute;top:50%"></div>
+      </div>
+      <a href="sms:+5585991963443?body=Oi">Clique para enviar oi</a>
+
+      <div id="corpo" style="display:none">
+          <select id="selCategoria">
+              <option>Selecione...</option>
+          </select>
+      </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/3.5.2/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyCYP1BQlG9CZbaUfhrQE4GdFl9SNkXl3mg",
+      authDomain: "teste-incrivel.firebaseapp.com",
+      databaseURL: "https://teste-incrivel.firebaseio.com",
+      storageBucket: "teste-incrivel.appspot.com",
+      messagingSenderId: "936131680484"
+    };
+    mainapp = firebase.initializeApp(config);
+
+    function verificarLogin(){
+      if(window.sessionStorage.getItem('usuario') != null){
+        login = window.sessionStorage.getItem('usuario');
+        document.getElementById("loginUser").value = "Logado como: "+login;
+        userDAO = mainapp.database().ref("/users/"+login);
+        userDAO.once('value').then(function(snapshot) {
+            document.getElementById("corpo").style.display = "block";
+            base = snapshot.val().base;
+            catDAO = mainapp.database().ref("/"+base+"/categorias");
+            catDAO.once('value').then(function(snapshot) {
+              lista = snapshot.val();
+              for(var item in lista){
+                x = lista[item];
+                var child = document.createElement("option");
+                child.text = x.descricao;
+                child.style = "background-color:" + x.cor;
+                document.getElementById("selCategoria").options.add(child,1);
+              }
+            });
+          document.getElementById("progresso").style.display = "none";
+          document.getElementById("divLogin").style.display = "none";
+          document.getElementById("divLogado").style.display = "block";
+        });
+      }
+    }
+
+    function carregarUsuario(){
+      document.getElementById("progresso").style.display = "block";
+      login = document.getElementById("login").value;
+      senha = document.getElementById("senha").value;
+      userDAO = mainapp.database().ref("/users/"+login);
+      userDAO.once('value').then(function(snapshot) {
+        user = snapshot.val();
+        if(user.senha == senha){
+          window.sessionStorage.setItem('usuario', login);
+          document.getElementById("corpo").style.display = "block";
+          base = snapshot.val().base;
+          catDAO = mainapp.database().ref("/"+base+"/categorias");
+          catDAO.once('value').then(function(snapshot) {
+            lista = snapshot.val();
+            for(var item in lista){
+              x = lista[item];
+              var child = document.createElement("option");
+              child.text = x.descricao;
+              child.style = "background-color:" + x.cor;
+              document.getElementById("selCategoria").options.add(child,1);
+            }
+          });
+        }else{
+          document.getElementById("corpo").innerHTML = "LOGIN/SENHA INVALIDOS";
+        }
+        document.getElementById("progresso").style.display = "none";
+      });
+    }
+
+
+  </script>
+</body>
+</html>
